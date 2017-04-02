@@ -1,9 +1,8 @@
 #include <LiquidCrystal.h>
-#include <SoftwareSerial.h>
 #include <SPI.h>
 #include "dht.h"
 
-#define DHT11_PIN 8
+#define DHT11_PIN 10
 #define BUTTON_PIN 12
 
 const int latchPin = 5;  // Pin connected to Pin 12 of 74HC595 (Latch)
@@ -12,78 +11,51 @@ const int clockPin = 7;  // Pin connected to Pin 11 of 74HC595 (Clock)
 
 LiquidCrystal lcd(9);
 dht DHT;
-
-// initialize the library with the numbers of the interface pins
-//LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 int reading;
 int prev = LOW;
 int counter = 0;
-//SoftwareSerial BTSerial(4, 5);
+char data = 0;
 
 void setup() {
   Serial.begin(9600);
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
-//  String setName = String("AT+NAME=My Arduino\r\n"); //Setting name as 'MyBTBee'
-//  BTSerial.begin(38400);
-//  BTSerial.print("AT\r\n"); //Check Status
-//  delay(500);
-//  while (BTSerial.available()) {
-//    Serial.write(BTSerial.read());
-//  }
-//  BTSerial.print(setName); //Send Command to change the name
-//  delay(500);
-//  while (BTSerial.available()) {
-//    Serial.write(BTSerial.read());
-//  }
   pinMode(BUTTON_PIN, INPUT);
+  pinMode(4, OUTPUT);        //Sets digital pin 13 as output pin
   int chk = DHT.read11(DHT11_PIN);
   lcd.begin(16, 2);
+  showNumber(counter);
 }
 
 void loop() {
-//  char c;
-//  if (Serial.available()) {
-//    c = Serial.read();
-//    Serial.print(c);
-//  }
-//  if (c == 't') {
-//    readSensor();
-//  }
-
-  // Read Button
+//  Read Button
   reading = digitalRead(BUTTON_PIN);
   if ((reading == HIGH) && (prev == LOW)) {
-    Serial.print("Button pressed!!!");
-//    counter++;
-//    lcd.setCursor(0, 1);
-//    lcd.print("Counter = ");
-//    lcd.print(millis()/1000);
-//    lcd.print(counter);
-//    Serial.print("Counter = ");
-//    Serial.print(counter);
+    counter++;
+    showNumber(counter);
   }
   prev = reading;
 
-  // Show Digit
-  for (int i = 0; i < 10; i++) {
-    showNumber(i);
-    delay(1000);
+  if (Serial.available() > 0) { // Send data only when you receive data:
+    data = Serial.read();      //Read the incoming data and store it into variable data
+    Serial.print(data);        //Print Value inside data in Serial monitor
+    Serial.print("\n");        //New line 
+    if (data == '1') {            //Checks whether value of data is equal to 1 
+      lcd.setCursor(0, 1);
+      lcd.print("Turned on");
+      digitalWrite(4, HIGH);  //If value is 1 then LED turns ON
+    } else if (data == '0') {       //Checks whether value of data is equal to 0
+      lcd.setCursor(0, 1);
+      lcd.print("Turned off");
+      digitalWrite(4, LOW);   //If value is 0 then LED turns OFF
+    }
   }
-  
-  showSensor();
-//  lcd.setCursor(0,1);
-//  lcd.print(millis()/1000);
-}
 
-void showSensor() {
-  float hum = DHT.humidity;
   lcd.setCursor(0, 0);
   lcd.print("Hum = ");
-  lcd.print(hum);
+  lcd.print(DHT.humidity);
   lcd.print(" %");
-  delay(10);
 }
 
 void showNumber(int num) {
