@@ -57,12 +57,32 @@ void receiveData() {
     if (data == '1') {            //Checks whether value of data is equal to 1 
       lcd.setCursor(0, 1);
       lcd.print("Turned on");
-      digitalWrite(LED_PIN, HIGH);  //If value is 1 then LED turns ON
+      ledOn();
+//      digitalWrite(LED_PIN, HIGH);  //If value is 1 then LED turns ON
     } else if (data == '0') {       //Checks whether value of data is equal to 0
       lcd.setCursor(0, 1);
       lcd.print("Turned off");
-      digitalWrite(LED_PIN, LOW);   //If value is 0 then LED turns OFF
+      ledOff();
+//      digitalWrite(LED_PIN, LOW);   //If value is 0 then LED turns OFF
     }
+  }
+}
+
+void ledOn() {
+  for (int fadeValue = 0 ; fadeValue <= 255; fadeValue += 5) {
+    // sets the value (range from 0 to 255):
+    analogWrite(LED_PIN, fadeValue);
+    // wait for 30 milliseconds to see the dimming effect
+    delay(30);
+  }
+}
+
+void ledOff() {
+  for (int fadeValue = 255 ; fadeValue >= 0; fadeValue -= 5) {
+    // sets the value (range from 0 to 255):
+    analogWrite(LED_PIN, fadeValue);
+    // wait for 30 milliseconds to see the dimming effect
+    delay(30);
   }
 }
 
