@@ -1,5 +1,6 @@
 #include <SPI.h>
 #include <LiquidCrystal.h>
+//#include <SerialCommand.h>
 #include "dht.h"
 
 #define DHT11_PIN 5
@@ -17,10 +18,11 @@ const int dataPin  = 3;  // Pin connected to Pin 14 of 74HC595 (Data)
 const int clockPin = 4;  // Pin connected to Pin 11 of 74HC595 (Clock)
 
 int thresholds[16] = {62, 42, 21, 0, 144, 127, 110, 92, 214, 200, 184, 170, 273, 260, 247, 236};
-char keypad[16] = {'1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D'}; 
-int melody[] = {NOTE_C4, NOTE_D4, NOTE_E4, 0, NOTE_C4, NOTE_D4, NOTE_E4, 0};
+char keypad[16] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p'}; 
+int melody[] = {NOTE_E4, NOTE_E4, 0, 0, NOTE_E4, NOTE_E4, 0, 0};
 int noteDurations[] = {4, 4, 4, 4, 4, 4, 4, 4};
 
+//SerialCommand sCmd;
 LiquidCrystal lcd(LCD_PIN);
 dht DHT;
 int reading;
@@ -30,6 +32,8 @@ char data = 0;
 
 void setup() {
   Serial.begin(9600);
+//  while (!Serial);
+//  sCmd.addCommand("ECHO", echoHandler);
   pinMode(latchPin, OUTPUT);
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
@@ -43,45 +47,38 @@ void loop() {
   lcd.setCursor(0, 0);
   lcd.print(millis()/1000);
   readButton();
-  receiveData();
+  if (Serial.available() > 0) { // Send data only when you receive data:
+//    sCmd.readSerial();
+    receiveData();
+  }
   readHum();
-  showNumber(5);
+  showNumber(8);
   readKeypad();
 }
 
 void receiveData() {
-  if (Serial.available() > 0) { // Send data only when you receive data:
-    data = Serial.read();      //Read the incoming data and store it into variable data
-    Serial.print(data);        //Print Value inside data in Serial monitor
-    Serial.print("\n");        //New line 
-    if (data == '1') {            //Checks whether value of data is equal to 1 
-      lcd.setCursor(0, 1);
-      lcd.print("Turned on");
-      ledOn();
+  data = Serial.read();      //Read the incoming data and store it into variable data
+  Serial.print(data);        //Print Value inside data in Serial monitor
+  Serial.print("\n");        //New line 
+  if (data == '1') {            //Checks whether value of data is equal to 1 
+    ledOn();
 //      digitalWrite(LED_PIN, HIGH);  //If value is 1 then LED turns ON
-    } else if (data == '0') {       //Checks whether value of data is equal to 0
-      lcd.setCursor(0, 1);
-      lcd.print("Turned off");
-      ledOff();
+  } else if (data == '0') {       //Checks whether value of data is equal to 0
+    ledOff();
 //      digitalWrite(LED_PIN, LOW);   //If value is 0 then LED turns OFF
-    }
   }
 }
 
 void ledOn() {
   for (int fadeValue = 0 ; fadeValue <= 255; fadeValue += 5) {
-    // sets the value (range from 0 to 255):
     analogWrite(LED_PIN, fadeValue);
-    // wait for 30 milliseconds to see the dimming effect
     delay(30);
   }
 }
 
 void ledOff() {
   for (int fadeValue = 255 ; fadeValue >= 0; fadeValue -= 5) {
-    // sets the value (range from 0 to 255):
     analogWrite(LED_PIN, fadeValue);
-    // wait for 30 milliseconds to see the dimming effect
     delay(30);
   }
 }
@@ -91,6 +88,9 @@ void readKeypad() {
   for (int i = 0; i < 16; i++) {
     if (abs(value - thresholds[i]) < 5) {
       Serial.println(keypad[i]);
+      Serial.write(keypad[i]);
+      Serial.flush();
+      delay(20);
       while (analogRead(KEYPAD_PIN) < 1000) {
         delay(100);
       }
@@ -162,3 +162,15 @@ void showNumber(int num) {
   }
   digitalWrite(latchPin, HIGH);
 }
+
+//void echoHandler() {
+//  char *arg;
+//  arg = sCmd.next();
+//  if (arg != NULL) {  
+//    Serial.print("Received argument = ");
+//    Serial.println(arg);
+//    sCmd.addCommand("ECHO", echoHandler);
+//  } else {
+//    Serial.println("Nothing to echo");
+//  }
+//}
